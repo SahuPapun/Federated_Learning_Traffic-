@@ -116,19 +116,67 @@ Latency impact on synchronization
 
 Stability under bandwidth constraints
 
-How to Run
-1. Clone Repository
-git clone https://github.com/kaustubh-5016/federated-traffic-prediction.git
-cd federated-traffic-prediction
+How to Deploy and Run
 
-2. Start Aggregation Server
-python server.py
+> Note: the previous "server.py/client.py" run instructions are outdated for this repository state.
 
-3. Start Edge Nodes
-python client.py --node_id=1
-python client.py --node_id=2
-...
-python client.py --node_id=6
+1. Prepare Python environment
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+Use Python 3.10+.
+
+2. Train/generate federated models
+
+From the repository root:
+
+```bash
+python run.py
+```
+
+This command trains clients, performs federated aggregation rounds, and writes model artifacts under:
+
+- `data/client*_space`
+- `data/server_space`
+
+3. Start the inference API and dashboard
+
+```bash
+python api_inference_server.py
+```
+
+The service starts on `0.0.0.0:8002`.
+
+- Dashboard: `http://<host>:8002/` or `http://<host>:8002/dashboard`
+- API base: `http://<host>:8002/api/inference`
+
+Key API endpoints:
+
+- `GET /api/inference/available-models`
+- `POST /api/inference/predict` (multipart form fields: `file`, `client_id`)
+- `GET /api/inference/metrics/<prediction_id>`
+- `GET /api/inference/export/<prediction_id>`
+
+4. Production hardening guidance
+
+- Place the Flask service behind Nginx or Caddy and terminate TLS (HTTPS) at the proxy.
+- Run the app under a managed service (for example: `systemd`, container runtime, or process manager).
+- Keep a single app worker for TensorFlow/Keras stability unless multi-worker behavior has been validated in your environment.
+- Restrict inbound firewall access to only the reverse proxy/public ports.
+
+5. Operational checks after deploy
+
+- Verify trained models are visible:
+  - `GET /api/inference/available-models`
+- Upload a CSV in dashboard/API and confirm predictions are returned.
+- Validate metrics retrieval using the returned `prediction_id`.
+- Validate CSV export with `GET /api/inference/export/<prediction_id>`.
+- Check service logs for startup/model-loading errors.
 
 Future Improvements
 
