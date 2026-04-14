@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Federated Learning – Inference Dashboard</title>
+
+  <!-- Chart.js (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+  <!-- Dashboard styles -->
+  <link rel="stylesheet" href="/ui/inference_style.css" />
+</head>
+<body>
+
+<!-- ===================== Header ===================== -->
+<header class="header">
+  <span class="header-icon">📡</span>
+  <div>
+    <h1>Federated Learning – Traffic Inference Dashboard</h1>
+    <p>Upload a test dataset, select a client model, and visualise actual vs predicted traffic.</p>
+  </div>
+</header>
+
+<!-- ===================== Main Layout ===================== -->
+<div class="main-container">
+
+  <!-- -------- Left: Upload & Controls -------- -->
+  <aside>
+    <div class="card">
+      <h2 class="card-title">⬆️ Upload &amp; Predict</h2>
+
+      <!-- Upload zone -->
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept=".csv" />
+        <span class="upload-icon">📂</span>
+        <p><strong>Drag &amp; drop</strong> a CSV file here,<br />or click to browse.</p>
+        <p style="margin-top:8px;font-size:0.78rem">
+          Expected: single numeric column of traffic values<br />(≥ 72 rows)
+        </p>
+      </div>
+      <div class="file-selected-info" id="fileInfo"></div>
+
+      <!-- Client selector -->
+      <div class="form-group" style="margin-top:18px">
+        <label for="clientSelect">Client / Model</label>
+        <select class="form-control" id="clientSelect">
+          <option value="">Loading models…</option>
+        </select>
+      </div>
+
+      <!-- Predict button -->
+      <button class="btn btn-primary" id="predictBtn">
+        🚀 Upload &amp; Predict
+      </button>
+
+      <!-- Status bar -->
+      <div class="status-bar" id="statusBar">
+        <div class="spinner" id="statusSpinner" style="display:none"></div>
+        <span id="statusMsg"></span>
+      </div>
+    </div>
+
+    <!-- Instructions card -->
+    <div class="card" style="margin-top:20px">
+      <h2 class="card-title">ℹ️ How to Use</h2>
+      <ol style="padding-left:18px;line-height:2;font-size:0.875rem;color:var(--muted)">
+        <li>Run training: <code>python run.py</code></li>
+        <li>Start API: <code>python api_inference_server.py</code></li>
+        <li>Upload a CSV with traffic values</li>
+        <li>Select a client model</li>
+        <li>Click <strong>Upload &amp; Predict</strong></li>
+        <li>Explore charts &amp; download results</li>
+      </ol>
+      <p style="margin-top:12px;font-size:0.8rem;color:var(--muted)">
+        <strong>CSV format:</strong> one column of numeric traffic values (e.g., <code>source,LOSAng</code>).
+        The dashboard auto-detects the first numeric column.
+      </p>
+    </div>
+  </aside>
+
+  <!-- -------- Right: Results -------- -->
+  <section class="results-panel" id="resultsPanel">
+
+    <!-- Empty state -->
+    <div class="empty-state" id="emptyState">
+      <span class="icon">📊</span>
+      <p>Upload a CSV file and click <strong>Upload &amp; Predict</strong> to see results here.</p>
+    </div>
+
+    <!-- Metrics (hidden until first prediction) -->
+    <div class="card" id="metricsSection" style="display:none">
+      <h2 class="card-title">📈 Accuracy Metrics</h2>
+      <div class="metrics-grid">
+        <div class="metric-card mse-card">
+          <div class="metric-label">MSE</div>
+          <div class="metric-value" id="mseVal">—</div>
+        </div>
+        <div class="metric-card mae-card">
+          <div class="metric-label">MAE</div>
+          <div class="metric-value" id="maeVal">—</div>
+        </div>
+        <div class="metric-card rmse-card">
+          <div class="metric-label">RMSE</div>
+          <div class="metric-value" id="rmseVal">—</div>
+        </div>
+        <div class="metric-card r2-card">
+          <div class="metric-label">R²</div>
+          <div class="metric-value" id="r2Val">—</div>
+        </div>
+      </div>
+      <p style="margin-top:12px;font-size:0.8rem;color:var(--muted)">
+        Predictions: <strong id="numPredVal">—</strong>
+      </p>
+    </div>
+
+    <!-- Charts card (hidden until first prediction) -->
+    <div class="card" id="chartsCard" style="display:none">
+      <h2 class="card-title">📉 Visualisation</h2>
+
+      <div class="chart-tabs">
+        <button class="chart-tab active" id="chartTabMain">Actual vs Predicted</button>
+        <button class="chart-tab" id="chartTabError">Error Distribution</button>
+      </div>
+
+      <div id="mainChartWrap" class="chart-wrapper">
+        <canvas id="mainChart"></canvas>
+      </div>
+      <div id="errorChartWrap" class="chart-wrapper" style="display:none">
+        <canvas id="errorChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Data table card (hidden until first prediction) -->
+    <div class="card" id="tableCard" style="display:none">
+      <div class="download-row">
+        <h2 class="card-title" style="margin-bottom:0">📋 Prediction Table</h2>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <span class="prediction-info" id="predInfoText"></span>
+          <button class="btn btn-success" id="downloadBtn" style="display:none">
+            ⬇️ Download CSV
+          </button>
+        </div>
+      </div>
+
+      <div class="table-wrap" style="margin-top:16px">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Actual</th>
+              <th>Predicted</th>
+              <th>Error</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </section>
+</div>
+
+<!-- Scripts -->
+<script src="/ui/chart_utils.js"></script>
+<script src="/ui/inference_app.js"></script>
+
+<!-- Show charts/table cards when metricsSection becomes visible -->
+<script>
+  const observer = new MutationObserver(() => {
+    const visible = document.getElementById('metricsSection').style.display !== 'none';
+    document.getElementById('chartsCard').style.display  = visible ? 'block' : 'none';
+    document.getElementById('tableCard').style.display   = visible ? 'block' : 'none';
+  });
+  observer.observe(document.getElementById('metricsSection'), { attributes: true, attributeFilter: ['style'] });
+</script>
+
+</body>
+</html>

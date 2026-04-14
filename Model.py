@@ -208,3 +208,35 @@ def find_mean_squared_error(model,client,y_test,x_test):
     y_pred = model.predict(x_test).flatten()
     mse = mean_squared_error(y_test, y_pred)
     print(client+"- Mean Squared Error: "+str(mse))
+
+def save_scaler_to_disk(scaler, path):
+    with open(path, 'wb') as f:
+        pickle.dump(scaler, f)
+
+def load_scaler_from_disk(path):
+    with open(path, 'rb') as f:
+        return pickle.load(f)
+
+def predict_on_new_data(model, data_values, lookback=70):
+    scaler = StandardScaler()
+    data_array = np.array(data_values).reshape(-1, 1)
+    scaled = scaler.fit_transform(data_array)
+    x_seq, y_seq = create_rnn_dataset(scaled, lookback)
+    if len(x_seq) == 0:
+        return None, None, scaler
+    x_input = np.reshape(x_seq, (x_seq.shape[0], 1, x_seq.shape[1]))
+    y_pred_scaled = model.predict(x_input).flatten()
+    y_pred = scaler.inverse_transform(y_pred_scaled.reshape(-1, 1)).flatten()
+    y_actual = scaler.inverse_transform(y_seq.reshape(-1, 1)).flatten()
+    return y_actual.tolist(), y_pred.tolist(), scaler
+
+def format_inference_results(actual, predicted):
+    results = []
+    for i, (a, p) in enumerate(zip(actual, predicted)):
+        results.append({
+            'index': i,
+            'actual': round(float(a), 4),
+            'predicted': round(float(p), 4),
+            'error': round(float(a - p), 4)
+        })
+    return results

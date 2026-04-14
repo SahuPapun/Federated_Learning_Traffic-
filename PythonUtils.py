@@ -42,3 +42,24 @@ def clients_to_server():
 def delete_file(file_path):
     if os.path.exists(file_path):
         os.remove(file_path)
+
+def load_final_model_path(client_id):
+    """Return the path to a client's trained model file."""
+    folder = space_path(f'client{client_id}_space')
+    return os.path.join(folder, f'client{client_id}_model.h5')
+
+def get_scaler_path(client_id):
+    """Return the path where a client's scaler is saved."""
+    folder = space_path(f'client{client_id}_space')
+    return os.path.join(folder, f'client{client_id}_scaler.pkl')
+
+def save_inference_results(results, output_path):
+    """Save inference result dicts to a CSV file."""
+    import csv
+    if not results:
+        return
+    fieldnames = list(results[0].keys())
+    with open(output_path, 'w', newline='') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(results)
