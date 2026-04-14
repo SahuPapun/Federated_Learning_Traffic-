@@ -120,6 +120,10 @@ How to Deploy and Run
 
 > Note: the previous "server.py/client.py" run instructions are outdated for this repository state.
 
+Prerequisites
+
+- Python 3.10+
+
 1. Prepare Python environment
 
 ```bash
@@ -129,7 +133,6 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Use Python 3.10+.
 
 2. Train/generate federated models
 
