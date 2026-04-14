@@ -122,7 +122,7 @@ How to Deploy and Run
 
 Prerequisites
 
-- Python 3.10+
+- Python 3.10 or 3.11
 
 1. Prepare Python environment
 
@@ -169,7 +169,7 @@ Key API endpoints:
 
 - Place the Flask service behind Nginx or Caddy and terminate TLS (HTTPS) at the proxy.
 - Run the app under a managed service (for example: `systemd`, container runtime, or process manager).
-- Keep a single app worker for TensorFlow/Keras stability unless multi-worker behavior has been validated in your environment.
+- Keep a single app worker for TensorFlow/Keras stability unless multi-worker behavior has been validated in your environment (for example, `gunicorn --workers 1 --worker-class sync`).
 - Restrict inbound firewall access to only the reverse proxy/public ports.
 
 5. Operational checks after deploy
