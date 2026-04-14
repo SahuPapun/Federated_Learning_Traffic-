@@ -122,7 +122,7 @@ How to Deploy and Run
 
 Prerequisites
 
-- Python 3.10 or 3.11
+- Python 3.10+ (3.10/3.11 recommended for widest TensorFlow wheel compatibility; verify TensorFlow version support before using 3.12+).
 
 1. Prepare Python environment
 

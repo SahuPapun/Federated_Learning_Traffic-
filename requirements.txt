@@ -11,3 +11,6 @@ keras>=2.13,<3
 # Inference API
 Flask>=2.3,<4
 Flask-Cors>=4.0,<5
+
+# Optional production WSGI server (Linux/macOS)
+gunicorn>=21,<24
